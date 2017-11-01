@@ -4,7 +4,7 @@
  * Сделано задание на звездочку
  * Реализованы методы several и through
  */
-getEmitter.isStar = true;
+getEmitter.isStar = false;
 module.exports = getEmitter;
 
 /**
@@ -13,32 +13,70 @@ module.exports = getEmitter;
  */
 function getEmitter() {
     return {
+        events: {},
 
         /**
-         * Подписаться на событие
-         * @param {String} event
-         * @param {Object} context
-         * @param {Function} handler
-         */
+        * Подписаться на событие
+        * @param {String} event
+        * @param {Object} context
+        * @param {Function} handler
+        * @returns {Object}
+        */
         on: function (event, context, handler) {
-            console.info(event, context, handler);
+            this.events[event] = this.events[event] || [];
+            this.events[event].push({
+                person: context,
+                func: handler
+            });
+
+            return this;
+
         },
 
         /**
-         * Отписаться от события
-         * @param {String} event
-         * @param {Object} context
-         */
+        * Отписаться от события
+        * @param {String} event
+        * @param {Object} context
+        * @returns {Object}
+        */
         off: function (event, context) {
-            console.info(event, context);
+            if (!this.events[event]) {
+
+                return this;
+            }
+            var eventsObj = this.events;
+            Object.keys(eventsObj).filter(function (item) {
+                return item.indexOf(event) !== -1;
+            })
+                .forEach(function (item) {
+                    eventsObj[item] = eventsObj[item].filter(function (personalEvent) {
+
+                        return personalEvent.person !== context;
+                    });
+                });
+
+            return this;
         },
 
         /**
-         * Уведомить о событии
-         * @param {String} event
-         */
+        * Уведомить о событии
+        * @param {String} event
+        * @returns {Object}
+        */
         emit: function (event) {
-            console.info(event);
+            var eventsObj = this.events;
+            var splitedEvent = event.split('.');
+            splitedEvent.map(function (item, index) {
+                return splitedEvent.slice(0, splitedEvent.length - index).join('.');
+            }).forEach(function (item) {
+                if (eventsObj[item]) {
+                    eventsObj[item].forEach(function (personalEvent) {
+                        personalEvent.func.call(personalEvent.person);
+                    });
+                }
+            });
+
+            return this;
         },
 
         /**
